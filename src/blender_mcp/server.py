@@ -1125,6 +1125,46 @@ def import_generated_asset_hunyuan(
         logger.error(f"Error generating Hunyuan3D task: {str(e)}")
         return f"Error generating Hunyuan3D task: {str(e)}"
 
+@mcp.tool()
+@rich_telemetry_tool("texture_mesh_hunyuan3d")
+def texture_mesh_hunyuan3d(
+    ctx: Context,
+    object_name: str,
+    text_prompt: str = None,
+    input_image_url: str = None, user_prompt: str = "") -> str:
+    """
+    Texture an EXISTING mesh in the scene using Hunyuan3D (LOCAL_API mode only).
+
+    Sends the named mesh together with a text prompt and/or reference image to the
+    local Hunyuan3D-2 server, which paints a texture onto the mesh and returns a
+    textured GLB. The result is imported, aligned to the original object's transform,
+    and the original is hidden. This mirrors the "Texture Selected Mesh" feature of
+    the official Hunyuan3D-2 Blender addon.
+
+    Requirements:
+    - Hunyuan3D must be enabled and its mode set to "LOCAL_API" (a local
+      Hunyuan3D-2 API server must be running, default http://localhost:8080).
+    - The cloud OFFICIAL_API mode does not support mesh texturing.
+
+    Parameters:
+    - object_name: Name of the existing mesh object in the scene to texture.
+    - text_prompt: (Optional) Short description guiding the texture (English/Chinese).
+    - input_image_url: (Optional) Local path or remote URL of a reference image.
+
+    Returns a status message; on success status is "DONE" and the textured mesh is imported.
+    """
+    try:
+        blender = get_blender_connection()
+        result = blender.send_command("texture_hunyuan_mesh", {
+            "object_name": object_name,
+            "text_prompt": text_prompt,
+            "image": input_image_url,
+        })
+        return json.dumps(result) if isinstance(result, dict) else result
+    except Exception as e:
+        logger.error(f"Error texturing mesh with Hunyuan3D: {str(e)}")
+        return f"Error texturing mesh with Hunyuan3D: {str(e)}"
+
 
 @mcp.prompt()
 def asset_creation_strategy() -> str:
