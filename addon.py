@@ -2157,10 +2157,18 @@ class BlenderMCPServer:
             if text_prompt and image:
                 return {"error": "Prompt and Image cannot be provided simultaneously"}
             # Fixed parameter configuration
+            # International (Professional) mode: Tencent Cloud International
+            # "Hunyuan-to-3D (Professional)" service uses a different action,
+            # region and request schema than the mainland standard service.
+            intl_pro = getattr(bpy.context.scene, "blendermcp_hunyuan3d_intl_pro", False)
             service = "hunyuan"
-            action = "SubmitHunyuanTo3DJob"
             version = "2023-09-01"
-            region = "ap-guangzhou"
+            if intl_pro:
+                action = "SubmitHunyuanTo3DProJob"
+                region = "ap-singapore"
+            else:
+                action = "SubmitHunyuanTo3DJob"
+                region = "ap-guangzhou"
 
             headParams={
                 "Action": action,
@@ -2169,9 +2177,13 @@ class BlenderMCPServer:
             }
 
             # Constructing request parameters
-            data = {
-                "Num": 1  # The current API limit is only 1
-            }
+            if intl_pro:
+                # Pro API rejects "Num"/"ResultFormat"; supports EnablePBR
+                data = {"EnablePBR": True}
+            else:
+                data = {
+                    "Num": 1  # The current API limit is only 1
+                }
 
             # Handling text prompts
             if text_prompt:
@@ -2304,10 +2316,15 @@ class BlenderMCPServer:
             if not job_id:
                 return {"error": "JobId is required"}
             
+            intl_pro = getattr(bpy.context.scene, "blendermcp_hunyuan3d_intl_pro", False)
             service = "hunyuan"
-            action = "QueryHunyuanTo3DJob"
             version = "2023-09-01"
-            region = "ap-guangzhou"
+            if intl_pro:
+                action = "QueryHunyuanTo3DProJob"
+                region = "ap-singapore"
+            else:
+                action = "QueryHunyuanTo3DJob"
+                region = "ap-guangzhou"
 
             headParams={
                 "Action": action,
@@ -2527,6 +2544,7 @@ class BLENDERMCP_PT_Panel(bpy.types.Panel):
                 else:
                     layout.prop(scene, "blendermcp_hunyuan3d_secret_id", text="SecretId")
                     layout.prop(scene, "blendermcp_hunyuan3d_secret_key", text="SecretKey")
+                layout.prop(scene, "blendermcp_hunyuan3d_intl_pro", text="International (Pro) account")
             if scene.blendermcp_hunyuan3d_mode == 'LOCAL_API':
                 if prefs:
                     layout.prop(prefs, "hunyuan3d_api_url", text="API URL")
@@ -2684,6 +2702,14 @@ def register():
         default="LOCAL_API"
     )
 
+    bpy.types.Scene.blendermcp_hunyuan3d_intl_pro = bpy.props.BoolProperty(
+        name="International (Pro)",
+        description="Use Tencent Cloud International 'Hunyuan-to-3D (Professional)' service "
+                    "(SubmitHunyuanTo3DProJob, region ap-singapore, PBR). Enable this for "
+                    "International-site / Professional accounts; leave off for the mainland standard service",
+        default=False
+    )
+
     bpy.types.Scene.blendermcp_hunyuan3d_secret_id = bpy.props.StringProperty(
         name="Hunyuan 3D SecretId",
         description="SecretId provided by Hunyuan 3D",
@@ -2799,6 +2825,7 @@ def unregister():
     del bpy.types.Scene.blendermcp_sketchfab_api_key
     del bpy.types.Scene.blendermcp_use_hunyuan3d
     del bpy.types.Scene.blendermcp_hunyuan3d_mode
+    del bpy.types.Scene.blendermcp_hunyuan3d_intl_pro
     del bpy.types.Scene.blendermcp_hunyuan3d_secret_id
     del bpy.types.Scene.blendermcp_hunyuan3d_secret_key
     del bpy.types.Scene.blendermcp_hunyuan3d_api_url
