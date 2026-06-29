@@ -2,7 +2,39 @@
 
 # BlenderMCP - Blender Model Context Protocol Integration
 
+> **Fork notice.** This is a personal fork of the original
+> [ahujasid/blender-mcp](https://github.com/ahujasid/blender-mcp).
+> All credit for BlenderMCP goes to the original author and contributors.
+> This fork only adds **International (Pro) Hunyuan3D support** — see
+> [What's different in this fork](#whats-different-in-this-fork) below. Everything
+> else is unchanged; for the canonical project, docs and support, use the upstream repo.
+
 BlenderMCP connects Blender to Claude AI through the Model Context Protocol (MCP), allowing Claude to directly interact with and control Blender. This integration enables prompt assisted 3D modeling, scene creation, and manipulation.
+
+## What's different in this fork
+
+The upstream Hunyuan3D integration targets Tencent Cloud's **mainland** standard
+service (`SubmitHunyuanTo3DJob`, region `ap-guangzhou`). Accounts on the **Tencent
+Cloud International** site that use the **Hunyuan-to-3D (Professional)** offering get
+an `AuthFailure` / `ResourceUnavailable` (`计费状态未知`) error against that endpoint.
+
+This fork adds an **"International (Pro)"** toggle (BlenderMCP sidebar → *Use Tencent
+Hunyuan 3D model generation* → *Official API* → **International (Pro) account**). When
+enabled it switches the Hunyuan3D calls to the International Professional API:
+
+| | Upstream (toggle off) | International (Pro) (toggle on) |
+|---|---|---|
+| Submit action | `SubmitHunyuanTo3DJob` | `SubmitHunyuanTo3DProJob` |
+| Query action | `QueryHunyuanTo3DJob` | `QueryHunyuanTo3DProJob` |
+| Region | `ap-guangzhou` | `ap-singapore` |
+| Request body | `{"Num": 1}` | `{"EnablePBR": true}` |
+
+When the toggle is **off**, behaviour is identical to upstream, so this change is
+backwards compatible. Enter your International SecretId/SecretKey as usual and tick
+the **International (Pro) account** box.
+
+---
+
 
 **[Official website](https://blendermcp.org/)**
 
